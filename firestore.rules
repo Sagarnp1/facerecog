@@ -1,0 +1,268 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to get user data
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    // Helper function to check if user is admin
+    function isAdmin() {
+      return request.auth != null && getUserData().role == 'admin';
+    }
+    
+    // Helper function to check if user is CR (Class Representative)
+    // Only students who were properly promoted by an admin can be CR
+    function isCR() {
+      return request.auth != null && 
+             getUserData().isCR == true && 
+             getUserData().role == 'student';
+    }
+    
+    // Helper function to check if user is admin or CR
+    function isAdminOrCR() {
+      return isAdmin() || isCR();
+    }
+
+    // Helper function to check if CR can manage content (notices/schedules)
+    // Ensures CR is from the same department and properly promoted
+    function canCRManageContent(departmentName) {
+      return isCR() && 
+             isSameDepartment(departmentName) &&
+             getUserData().role == 'student' &&
+             getUserData().isCR == true;
+    }
+    
+    // Helper function to check if user belongs to the same department
+    function isSameDepartment(departmentName) {
+      return request.auth != null && getUserData().department == departmentName;
+    }
+
+    // Helper function to check if admin/CR can create notification for a user
+    // Ensures the target user is in the same department
+    function canCreateNotificationForUser(targetUserId) {
+      let targetUserData = get(/databases/$(database)/documents/users/$(targetUserId)).data;
+      return getUserData().department == targetUserData.department;
+    }
+
+    // Helper function to check if admin already exists for a department
+    function adminExistsForDepartment(departmentName) {
+      return exists(/databases/$(database)/documents/department_admins/$(departmentName));
+    }
+
+    // Users collection rules
+    match /users/{userId} {
+      // Users can read their own data
+      allow read: if request.auth != null && request.auth.uid == userId;
+      
+      // Admins and CRs can read students in their department
+      allow read: if request.auth != null && 
+                     resource.data.role == 'student' &&
+                     isSameDepartment(resource.data.department) &&
+                     isAdminOrCR();
+      
+      // Users can create their own profile during signup
+      // Prevent multiple admins per department
+      allow create: if request.auth != null && 
+                       request.auth.uid == userId &&
+                       (request.resource.data.role == 'student' || 
+                        (request.resource.data.role == 'admin' && 
+                         !adminExistsForDepartment(request.resource.data.department)));
+      
+      // Only admins can update user data (for promoting/demoting CRs)
+      // Cannot change role from/to admin to prevent multiple admins
+      // Users can update their own notification preferences
+      allow update: if request.auth != null && 
+                       ((isAdmin() &&
+                         isSameDepartment(resource.data.department) &&
+                         // Prevent role changes to/from admin
+                         resource.data.role == request.resource.data.role) ||
+                        // Users can update their own notification preferences
+                        (request.auth.uid == userId &&
+                         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['notificationPreferences', 'preferencesUpdatedAt']) &&
+                         request.resource.data.notificationPreferences is map));
+      
+      // No one can delete user data
+      allow delete: if false;
+      
+      // Allow querying students by department for admins and CRs
+      allow list: if request.auth != null && isAdminOrCR();
+    }
+
+    // Department admins tracking collection
+    match /department_admins/{department} {
+      // Only allow reading to check if admin exists
+      allow read: if request.auth != null;
+      
+      // Only allow creating admin tracking document when no admin exists yet
+      // This prevents multiple admin creation for the same department
+      allow create: if request.auth != null && 
+                       !exists(/databases/$(database)/documents/department_admins/$(department)) &&
+                       request.resource.data.keys().hasAll(['adminId', 'department', 'createdAt']);
+      
+      // No updates or deletes allowed (admins are permanent)
+      allow update, delete: if false;
+    }
+
+    // Notices collection rules
+    match /notices/{noticeId} {
+      // Read access: All users (students, CRs, admins) from the same department can read notices
+      allow read: if request.auth != null && 
+                     isSameDepartment(resource.data.department) &&
+                     (getUserData().role == 'student' || getUserData().role == 'admin');
+      
+      // Create access: Only admins and admin-promoted CRs can create notices
+      // The notice must be for the same department as the creator
+      allow create: if request.auth != null && 
+                       (isAdmin() || canCRManageContent(request.resource.data.department)) && 
+                       isSameDepartment(request.resource.data.department) &&
+                       // Ensure required fields are present
+                       request.resource.data.keys().hasAll(['title', 'body', 'department', 'createdAt']) &&
+                       // Ensure department matches creator's department
+                       request.resource.data.department == getUserData().department;
+      
+      // Update access: Only admins and admin-promoted CRs from the same department can edit notices
+      allow update: if request.auth != null && 
+                       (isAdmin() || canCRManageContent(resource.data.department)) && 
+                       isSameDepartment(resource.data.department) &&
+                       // Ensure department cannot be changed
+                       request.resource.data.department == resource.data.department;
+      
+      // Delete access: Only admins and admin-promoted CRs from the same department can delete notices
+      allow delete: if request.auth != null && 
+                       (isAdmin() || canCRManageContent(resource.data.department)) && 
+                       isSameDepartment(resource.data.department);
+    }
+
+    // Schedules collection rules
+    match /schedules/{scheduleId} {
+      // Read access: All users (students, CRs, admins) from the same department can read schedules
+      allow read: if request.auth != null && 
+                     isSameDepartment(resource.data.department) &&
+                     (getUserData().role == 'student' || getUserData().role == 'admin');
+      
+      // Create access: Only admins and admin-promoted CRs can create schedules
+      allow create: if request.auth != null && 
+                       (isAdmin() || canCRManageContent(request.resource.data.department)) && 
+                       isSameDepartment(request.resource.data.department) &&
+                       // Ensure required fields are present
+                       request.resource.data.keys().hasAll(['title', 'description', 'department', 'createdAt']) &&
+                       // Ensure department matches creator's department
+                       request.resource.data.department == getUserData().department;
+      
+      // Update access: Only admins and admin-promoted CRs from the same department can edit schedules
+      allow update: if request.auth != null && 
+                       (isAdmin() || canCRManageContent(resource.data.department)) && 
+                       isSameDepartment(resource.data.department) &&
+                       // Ensure department cannot be changed
+                       request.resource.data.department == resource.data.department;
+      
+      // Delete access: Only admins and admin-promoted CRs from the same department can delete schedules
+      allow delete: if request.auth != null && 
+                       (isAdmin() || canCRManageContent(resource.data.department)) && 
+                       isSameDepartment(resource.data.department);
+    }
+
+    // Notifications collection rules
+    match /notifications/{notificationId} {
+      // Read access: Users can only read their own notifications
+      allow read: if request.auth != null && 
+                     request.auth.uid == resource.data.userId;
+      
+      // Create access: 
+      // 1. Users can create notifications for themselves
+      // 2. Admins and CRs can create notifications for users in their department
+      allow create: if request.auth != null && 
+                       request.resource.data.keys().hasAll(['userId', 'title', 'body', 'type', 'createdAt']) &&
+                       request.resource.data.userId is string &&
+                       (
+                         // Users can create notifications for themselves
+                         request.auth.uid == request.resource.data.userId ||
+                         // Admins can create notifications for any user in their department
+                         (isAdmin() && canCreateNotificationForUser(request.resource.data.userId)) ||
+                         // CRs can create notifications for any user in their department
+                         (isCR() && canCreateNotificationForUser(request.resource.data.userId))
+                       );
+      
+      // Update access: Users can only update the 'read' status of their own notifications
+      allow update: if request.auth != null && 
+                       request.auth.uid == resource.data.userId &&
+                       // Only allow updating the 'read' field
+                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']) &&
+                       request.resource.data.read is bool;
+      
+      // Delete access: Users can delete their own notifications
+      allow delete: if request.auth != null && 
+                       request.auth.uid == resource.data.userId;
+      
+      // List access: Users can query their own notifications
+      allow list: if request.auth != null && 
+                     request.query.filters.hasAll([
+                       ['userId', '==', request.auth.uid]
+                     ]);
+    }
+
+    // Attendance collection rules
+    match /attendance/{attendanceId} {
+      // Read access: Users can read attendance records for their department
+      allow read: if request.auth != null && 
+                     isSameDepartment(resource.data.department);
+      
+      // Create access: Only admins and CRs can create attendance records
+      allow create: if request.auth != null && isAdminOrCR();
+      
+      // No updates or deletes
+      allow update, delete: if false;
+      
+      // List access: Allow querying attendance by department
+      allow list: if request.auth != null;
+    }
+
+    // Attendance logs collection
+    match /attendance_logs/{logId} {
+      // Read access: Admins and CRs can read logs
+      allow read: if request.auth != null && isAdminOrCR();
+      
+      // Create access: Only admins and CRs can create logs
+      allow create: if request.auth != null && isAdminOrCR();
+      
+      // No updates or deletes
+      allow update, delete: if false;
+      
+      // List access: Allow querying logs
+      allow list: if request.auth != null && isAdminOrCR();
+    }
+
+    // Attendance Sessions collection rules
+    match /attendance_sessions/{sessionId} {
+      // Read access: Users can read attendance sessions from their department
+      allow read: if request.auth != null && 
+                     isSameDepartment(resource.data.department);
+      
+      // Create access: Only admins and CRs can create attendance sessions
+      allow create: if request.auth != null && 
+                       isAdminOrCR() &&
+                       isSameDepartment(request.resource.data.department);
+      
+      // Update access: Only the creator or admins from the same department can update
+      allow update: if request.auth != null && 
+                       isSameDepartment(resource.data.department) &&
+                       (isAdmin() || request.auth.uid == resource.data.created_by);
+      
+      // Delete access: Only admins can delete attendance sessions
+      allow delete: if request.auth != null && 
+                       isAdmin() && 
+                       isSameDepartment(resource.data.department);
+      
+      // List access
+      allow list: if request.auth != null && isAdminOrCR();
+    }
+
+    // Additional security: Deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
