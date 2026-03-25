@@ -7,7 +7,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Firebase Configuration
+# Can be either a file path or JSON string from environment variable
 FIREBASE_CREDENTIALS_PATH = os.getenv("FIREBASE_CREDENTIALS_PATH", "serviceAccountKey.json")
+FIREBASE_CREDENTIALS = os.getenv("FIREBASE_CREDENTIALS")  # JSON string for cloud deployment
 
 # Server Configuration
 HOST = os.getenv("HOST", "0.0.0.0")

@@ -60,7 +60,17 @@ async def log_requests(request, call_next):
 
 # Initialize Firebase Admin SDK
 try:
-    cred = credentials.Certificate(config.FIREBASE_CREDENTIALS_PATH)
+    # Try to load credentials from environment variable (for cloud deployment)
+    if config.FIREBASE_CREDENTIALS:
+        import json
+        cred_dict = json.loads(config.FIREBASE_CREDENTIALS)
+        cred = credentials.Certificate(cred_dict)
+        logger.info("Firebase credentials loaded from environment variable")
+    # Fall back to file-based credentials (for local development)
+    else:
+        cred = credentials.Certificate(config.FIREBASE_CREDENTIALS_PATH)
+        logger.info(f"Firebase credentials loaded from file: {config.FIREBASE_CREDENTIALS_PATH}")
+
     firebase_admin.initialize_app(cred)
     db = firestore.client()
     logger.info("Firebase Admin SDK initialized successfully")

@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: ioe-face-recognition-backend
+    env: docker
+    plan: free
+    region: oregon
+    healthCheckPath: /
+    envVars:
+      - key: FIREBASE_CREDENTIALS
+        sync: false
+      - key: PORT
+        value: 8000
