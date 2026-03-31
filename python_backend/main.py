@@ -31,7 +31,7 @@ import config
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-ESP32_CAM_IP = "10.172.135.168"  # <--- UPDATE THIS TO YOUR ESPCAM IP
+ESP32_CAM_IP = "192.168.168"  # <--- UPDATE THIS TO YOUR ESPCAM IP
 
 # Initialize FastAPI app
 app = FastAPI(
