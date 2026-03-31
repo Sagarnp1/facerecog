@@ -17,6 +17,7 @@ class StudentSignupScreen extends StatefulWidget {
 
 class _StudentSignupScreenState extends State<StudentSignupScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _passwordFormKey = GlobalKey<FormState>();
   final _fullNameController = TextEditingController();
   final _rollNoController = TextEditingController();
   final _emailController = TextEditingController();
@@ -32,6 +33,29 @@ class _StudentSignupScreenState extends State<StudentSignupScreen> {
   int _currentStep = 0;
   final _backendService = PythonBackendService();
 
+  // Cache dropdown items to prevent rebuilding
+  late final List<DropdownMenuItem<Department>> _departmentItems;
+  late final List<DropdownMenuItem<int>> _yearItems;
+
+  @override
+  void initState() {
+    super.initState();
+    // Build dropdown items once
+    _departmentItems = Department.values.map((dept) {
+      return DropdownMenuItem(
+        value: dept,
+        child: Text(dept.displayName),
+      );
+    }).toList();
+    
+    _yearItems = [1, 2, 3, 4].map((year) {
+      return DropdownMenuItem(
+        value: year,
+        child: Text('Year $year'),
+      );
+    }).toList();
+  }
+
   @override
   void dispose() {
     _fullNameController.dispose();
@@ -43,7 +67,7 @@ class _StudentSignupScreenState extends State<StudentSignupScreen> {
   }
 
   Future<void> _completeSignup() async {
-    if (!_formKey.currentState!.validate() || _capturedImages.length < 5) {
+    if (_capturedImages.length < 5) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please complete all steps including 5 face images'),
@@ -184,24 +208,30 @@ class _StudentSignupScreenState extends State<StudentSignupScreen> {
   }
 
   Widget _buildBasicInfoStep() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
+    return Form(
+      key: _formKey,
+      autovalidateMode: AutovalidateMode.disabled,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          RepaintBoundary(
+            child: Text(
               'Basic Information',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 24),
+          ),
+          const SizedBox(height: 24),
 
             // Full Name
             TextFormField(
               controller: _fullNameController,
+              textInputAction: TextInputAction.next,
+              textCapitalization: TextCapitalization.words,
+              autofillHints: const [AutofillHints.name],
+              enableSuggestions: false,
+              autocorrect: false,
               decoration: const InputDecoration(
                 labelText: 'Full Name',
                 prefixIcon: Icon(Icons.person),
@@ -221,6 +251,10 @@ class _StudentSignupScreenState extends State<StudentSignupScreen> {
             // Roll Number
             TextFormField(
               controller: _rollNoController,
+              textInputAction: TextInputAction.next,
+              keyboardType: TextInputType.text,
+              enableSuggestions: false,
+              autocorrect: false,
               decoration: const InputDecoration(
                 labelText: 'Roll Number',
                 prefixIcon: Icon(Icons.badge),
@@ -238,6 +272,10 @@ class _StudentSignupScreenState extends State<StudentSignupScreen> {
             TextFormField(
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
+              textInputAction: TextInputAction.next,
+              autofillHints: const [AutofillHints.email],
+              enableSuggestions: false,
+              autocorrect: false,
               decoration: const InputDecoration(
                 labelText: 'Email',
                 prefixIcon: Icon(Icons.email),
@@ -261,12 +299,7 @@ class _StudentSignupScreenState extends State<StudentSignupScreen> {
               labelText: 'Department',
               prefixIcon: Icon(Icons.domain),
             ),
-            items: Department.values.map((dept) {
-              return DropdownMenuItem(
-                value: dept,
-                child: Text(dept.displayName),
-              );
-            }).toList(),
+            items: _departmentItems,
             onChanged: (Department? value) {
               setState(() {
                 _selectedDepartment = value;
@@ -288,12 +321,7 @@ class _StudentSignupScreenState extends State<StudentSignupScreen> {
               labelText: 'Year',
               prefixIcon: Icon(Icons.calendar_today),
             ),
-            items: [1, 2, 3, 4].map((year) {
-              return DropdownMenuItem(
-                value: year,
-                child: Text('Year $year'),
-              );
-            }).toList(),
+            items: _yearItems,
             onChanged: (int? value) {
               setState(() {
                 _selectedYear = value;
@@ -308,27 +336,34 @@ class _StudentSignupScreenState extends State<StudentSignupScreen> {
           ),
         ],
       ),
-    ));
+    );
   }
 
   Widget _buildPasswordStep() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16),
+    return Form(
+      key: _passwordFormKey,
+      autovalidateMode: AutovalidateMode.disabled,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
+          RepaintBoundary(
+          child: Text(
             'Security Information',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 24),
+        ),
+        const SizedBox(height: 24),
 
           // Password
           TextFormField(
             controller: _passwordController,
             obscureText: _obscurePassword,
+            textInputAction: TextInputAction.next,
+            autofillHints: const [AutofillHints.newPassword],
+            enableSuggestions: false,
+            autocorrect: false,
             decoration: InputDecoration(
               labelText: 'Password',
               prefixIcon: const Icon(Icons.lock),
@@ -359,6 +394,9 @@ class _StudentSignupScreenState extends State<StudentSignupScreen> {
         TextFormField(
           controller: _confirmPasswordController,
           obscureText: _obscureConfirmPassword,
+          textInputAction: TextInputAction.done,
+          enableSuggestions: false,
+          autocorrect: false,
           decoration: InputDecoration(
             labelText: 'Confirm Password',
             prefixIcon: const Icon(Icons.lock_outline),
@@ -416,17 +454,16 @@ class _StudentSignupScreenState extends State<StudentSignupScreen> {
           ),
         ),
       ],
-    ));
+    ),
+    );
   }
 
   Widget _buildFaceCaptureStep() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Text(
-            'Face Registration',
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text(
+          'Face Registration',
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -523,82 +560,57 @@ class _StudentSignupScreenState extends State<StudentSignupScreen> {
               child: const Text('Retake All Images'),
             ),
           ],
-        ],
-      ),
+      ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         title: const Text('Student Registration'),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            // Progress Indicator
-            Container(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  for (int i = 0; i < 3; i++)
-                    Expanded(
-                      child: Container(
-                        height: 4,
-                        margin: EdgeInsets.only(right: i < 2 ? 8 : 0),
-                        decoration: BoxDecoration(
-                          color: i <= _currentStep
-                              ? Theme.of(context).primaryColor
-                              : Colors.grey.shade300,
-                          borderRadius: BorderRadius.circular(2),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          physics: const ClampingScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Progress Indicator
+              RepaintBoundary(
+                child: Row(
+                  children: [
+                    for (int i = 0; i < 3; i++)
+                      Expanded(
+                        child: Container(
+                          height: 4,
+                          margin: EdgeInsets.only(right: i < 2 ? 8 : 0),
+                          decoration: BoxDecoration(
+                            color: i <= _currentStep
+                                ? Theme.of(context).primaryColor
+                                : Colors.grey.shade300,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
                         ),
                       ),
-                    ),
-                ],
-              ),
-            ),
-
-            // Step Content
-            Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.only(
-                  left: 24.0,
-                  right: 24.0,
-                  bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-                ),
-                child: IndexedStack(
-                  index: _currentStep,
-                  children: [
-                    _buildBasicInfoStep(),
-                    _buildPasswordStep(),
-                    _buildFaceCaptureStep(),
                   ],
                 ),
               ),
-            ),
+              const SizedBox(height: 24),
 
-            // Navigation Buttons
-            Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).scaffoldBackgroundColor,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 4,
-                    offset: const Offset(0, -2),
-                  ),
-                ],
-              ),
-              padding: EdgeInsets.only(
-                left: 24,
-                right: 24,
-                top: 16,
-                bottom: MediaQuery.of(context).padding.bottom + 16,
-              ),
-              child: Row(
+              // Step Content - Only build current step
+              if (_currentStep == 0) _buildBasicInfoStep(),
+              if (_currentStep == 1) _buildPasswordStep(),
+              if (_currentStep == 2) _buildFaceCaptureStep(),
+              
+              const SizedBox(height: 24),
+
+              // Navigation Buttons
+              Row(
                 children: [
                   if (_currentStep > 0)
                     Expanded(
@@ -616,15 +628,17 @@ class _StudentSignupScreenState extends State<StudentSignupScreen> {
                     child: Consumer<AuthProvider>(
                       builder: (context, authProvider, child) {
                         final isLastStep = _currentStep == 2;
-                        final canProceed = _currentStep < 2 || _capturedImages.length == 5;
                         return ElevatedButton(
-                          onPressed: authProvider.isLoading || !canProceed
+                          onPressed: authProvider.isLoading
                               ? null
                               : () {
                                   if (isLastStep) {
                                     _completeSignup();
                                   } else {
                                     if (_currentStep == 0 && !_formKey.currentState!.validate()) {
+                                      return;
+                                    }
+                                    if (_currentStep == 1 && !_passwordFormKey.currentState!.validate()) {
                                       return;
                                     }
                                     setState(() {
@@ -648,8 +662,8 @@ class _StudentSignupScreenState extends State<StudentSignupScreen> {
                   ),
                 ],
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

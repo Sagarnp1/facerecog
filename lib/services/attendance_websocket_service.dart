@@ -60,7 +60,7 @@ class AttendanceWebSocketService {
   bool _isConnected = false;
   
   AttendanceWebSocketService({
-    this.baseUrl = 'ws://10.171.194.246:8000',
+    this.baseUrl = 'ws://10.172.135.246:8000',
   });
   
   /// Stream of attendance updates

@@ -116,6 +116,7 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         title: const Text('Create Schedule'),
         backgroundColor: Theme.of(context).primaryColor,
@@ -124,8 +125,11 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
+          physics: const ClampingScrollPhysics(),
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           child: Form(
             key: _formKey,
+            autovalidateMode: AutovalidateMode.disabled,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [

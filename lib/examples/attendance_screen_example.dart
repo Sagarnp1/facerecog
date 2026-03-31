@@ -43,10 +43,10 @@ class _AttendanceMarkingScreenState extends State<AttendanceMarkingScreen> {
   void initState() {
     super.initState();
     _backendService = PythonBackendService(
-      attendanceUrl: 'http://localhost:8000',
+      attendanceUrl: 'http://10.172.135.246:8000',
     );
     _websocketService = AttendanceWebSocketService(
-      baseUrl: 'ws://localhost:8000',
+      baseUrl: 'ws://10.172.135.246:8000',
     );
     
     // Listen to WebSocket updates
@@ -77,7 +77,7 @@ class _AttendanceMarkingScreenState extends State<AttendanceMarkingScreen> {
           '${connectionTest['message']}\n\n'
           'Please ensure:\n'
           '1. Python backend is running (python main.py)\n'
-          '2. Server is accessible at http://localhost:8000\n'
+          '2. Server is accessible at http://10.172.135.246:8000\n'
           '3. Webcam is connected and available'
         );
         setState(() => _isLoading = false);
@@ -461,8 +461,8 @@ class StudentInfo {
 ///    - Ensure webcam is connected and accessible
 ///
 /// 3. The screen will:
-///    - Connect to http://localhost:8000 for REST API
-///    - Connect to ws://localhost:8000 for WebSocket
+///    - Connect to http://10.172.135.246:8000 for REST API
+///    - Connect to ws://10.172.135.246:8000 for WebSocket
 ///    - Show real-time updates as students are recognized
 ///    - Display attendance statistics
 ///    - Allow stopping the session anytime

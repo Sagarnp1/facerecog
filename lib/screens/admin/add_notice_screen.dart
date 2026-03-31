@@ -51,12 +51,16 @@ class _AddNoticeScreenState extends State<AddNoticeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(title: const Text('Add Notice')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
+          physics: const ClampingScrollPhysics(),
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           child: Form(
             key: _formKey,
+            autovalidateMode: AutovalidateMode.disabled,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [

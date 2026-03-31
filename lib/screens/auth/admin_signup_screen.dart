@@ -91,51 +91,50 @@ class _AdminSignupScreenState extends State<AdminSignupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false, // Prevents lag when keyboard appears
       appBar: AppBar(
         title: const Text('Admin Registration'),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              padding: EdgeInsets.only(
-                left: 24.0,
-                right: 24.0,
-                top: 24.0,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 32,
-              ),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight - 48),
-                child: IntrinsicHeight(
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          physics: const ClampingScrollPhysics(), // Smoother scrolling
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
                 // Header
-                Icon(
-                  Icons.admin_panel_settings,
-                  size: 80,
-                  color: Theme.of(context).primaryColor,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Create Admin Account',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).primaryColor,
+                RepaintBoundary(
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.admin_panel_settings,
+                        size: 80,
+                        color: Theme.of(context).primaryColor,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Create Admin Account',
+                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).primaryColor,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Department administrators can manage students, notices, and schedules',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.grey[600],
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                   ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Department administrators can manage students, notices, and schedules',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey[600],
-                  ),
-                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 32),
 
@@ -168,6 +167,11 @@ class _AdminSignupScreenState extends State<AdminSignupScreen> {
                 // Full Name
                 TextFormField(
                   controller: _fullNameController,
+                  textInputAction: TextInputAction.next,
+                  textCapitalization: TextCapitalization.words,
+                  autofillHints: const [AutofillHints.name],
+                  enableSuggestions: false,
+                  autocorrect: false,
                   decoration: const InputDecoration(
                     labelText: 'Full Name',
                     prefixIcon: Icon(Icons.person),
@@ -188,6 +192,10 @@ class _AdminSignupScreenState extends State<AdminSignupScreen> {
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
+                  autofillHints: const [AutofillHints.email],
+                  enableSuggestions: false,
+                  autocorrect: false,
                   decoration: const InputDecoration(
                     labelText: 'Email',
                     prefixIcon: Icon(Icons.email),
@@ -247,7 +255,7 @@ class _AdminSignupScreenState extends State<AdminSignupScreen> {
                     return null;
                   },
                 ),
-                
+
                 // Admin existence error
                 if (_adminCheckError != null) ...[
                   const SizedBox(height: 8),
@@ -281,6 +289,10 @@ class _AdminSignupScreenState extends State<AdminSignupScreen> {
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
+                  textInputAction: TextInputAction.next,
+                  autofillHints: const [AutofillHints.newPassword],
+                  enableSuggestions: false,
+                  autocorrect: false,
                   decoration: InputDecoration(
                     labelText: 'Password',
                     prefixIcon: const Icon(Icons.lock),
@@ -311,6 +323,10 @@ class _AdminSignupScreenState extends State<AdminSignupScreen> {
                 TextFormField(
                   controller: _confirmPasswordController,
                   obscureText: _obscureConfirmPassword,
+                  textInputAction: TextInputAction.done,
+                  enableSuggestions: false,
+                  autocorrect: false,
+                  onFieldSubmitted: (_) => _signUp(),
                   decoration: InputDecoration(
                     labelText: 'Confirm Password',
                     prefixIcon: const Icon(Icons.lock_outline),
@@ -394,20 +410,16 @@ class _AdminSignupScreenState extends State<AdminSignupScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                        // Back to Login
-                        TextButton(
-                          onPressed: () {
-                            Navigator.of(context).popUntil((route) => route.isFirst);
-                          },
-                          child: const Text('Already have an account? Sign In'),
-                        ),
-                      ],
-                    ),
-                  ),
+                // Back to Login
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).popUntil((route) => route.isFirst);
+                  },
+                  child: const Text('Already have an account? Sign In'),
                 ),
-              ),
-            );
-          },
+              ],
+            ),
+          ),
         ),
       ),
     );

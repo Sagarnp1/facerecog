@@ -116,13 +116,10 @@ class _StudentDashboardState extends State<StudentDashboard> {
                   ],
                 ),
                 onTap: () {
-                  if (!_isDisposed && mounted) {
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      if (!_isDisposed && mounted) {
-                        authProvider.signOut();
-                      }
-                    });
-                  }
+                  // Use Future.delayed to ensure popup is fully closed before sign out
+                  Future.delayed(const Duration(milliseconds: 300), () {
+                    authProvider.signOut();
+                  });
                 },
               ),
             ],
@@ -466,8 +463,8 @@ class _StudentDashboardState extends State<StudentDashboard> {
                                 ),
                               ),
                             ),
-                            // Show edit/delete options for CR
-                            if (user.isCR && notice['postedByRole'] == 'cr')
+                            // Show edit/delete options for CR who posted the notice
+                            if (user.isCR && (notice['postedByRole'] == 'cr' || notice['postedBy'] == user.uid))
                               _SafePopupMenuButton(
                                 items: [
                                   PopupMenuItem(
@@ -623,8 +620,8 @@ class _StudentDashboardState extends State<StudentDashboard> {
                                 ),
                               ),
                             ),
-                            // Show edit/delete options for CR
-                            if (user.isCR && schedule['postedByRole'] == 'cr')
+                            // Show edit/delete options for CR (for schedules they created)
+                            if (user.isCR && (schedule['postedByRole'] == 'cr' || schedule['postedBy'] == user.uid))
                               _SafePopupMenuButton(
                                 items: [
                                   PopupMenuItem(
@@ -1335,13 +1332,22 @@ class _SafePopupMenuButtonState extends State<_SafePopupMenuButton> {
 
   @override
   Widget build(BuildContext context) {
+    // Check if widget is still active before building
+    if (_isDisposed || !mounted) {
+      return const SizedBox.shrink();
+    }
+
     return PopupMenuButton(
       icon: widget.icon,
+      enabled: mounted && !_isDisposed,
       itemBuilder: (context) {
         if (_isDisposed || !mounted) {
           return <PopupMenuEntry>[];
         }
         return widget.items;
+      },
+      onCanceled: () {
+        // Safe cleanup when menu is cancelled
       },
     );
   }

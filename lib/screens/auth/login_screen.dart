@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:email_validator/email_validator.dart';
 import '../../services/auth_provider.dart';
-import 'signup_screen.dart';
+import 'student_signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -47,38 +47,46 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false, // Prevents lag when keyboard appears
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
+          physics: const ClampingScrollPhysics(), // Smoother scrolling
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 60),
-                
-                // Logo and Title
-                Icon(
-                  Icons.school,
-                  size: 80,
-                  color: Theme.of(context).primaryColor,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'IOE Student Management',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).primaryColor,
+
+                // Logo and Title (static, won't rebuild)
+                RepaintBoundary(
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.school,
+                        size: 80,
+                        color: Theme.of(context).primaryColor,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'IOE Student Management',
+                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).primaryColor,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Sign in to your account',
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: Colors.grey[600],
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                   ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Sign in to your account',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Colors.grey[600],
-                  ),
-                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 48),
 
@@ -86,6 +94,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
+                  autofillHints: const [AutofillHints.email],
+                  enableSuggestions: false,
+                  autocorrect: false,
                   decoration: const InputDecoration(
                     labelText: 'Email',
                     prefixIcon: Icon(Icons.email),
@@ -106,6 +118,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
+                  textInputAction: TextInputAction.done,
+                  autofillHints: const [AutofillHints.password],
+                  enableSuggestions: false,
+                  autocorrect: false,
+                  onFieldSubmitted: (_) => _signIn(),
                   decoration: InputDecoration(
                     labelText: 'Password',
                     prefixIcon: const Icon(Icons.lock),
@@ -173,7 +190,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   onPressed: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) => const SignupScreen(),
+                        builder: (context) => const StudentSignupScreen(),
                       ),
                     );
                   },

@@ -207,6 +207,9 @@ class AuthService {
     required String title,
     required String body,
     required Department department,
+    String? postedBy,
+    String? postedByName,
+    String? postedByRole,
   }) async {
     final doc = _firestore.collection('notices').doc();
     await doc.set({
@@ -215,6 +218,9 @@ class AuthService {
       'body': body,
       'department': department.name,
       'createdAt': Timestamp.now(),
+      if (postedBy != null) 'postedBy': postedBy,
+      if (postedByName != null) 'postedByName': postedByName,
+      if (postedByRole != null) 'postedByRole': postedByRole,
     });
   }
 
@@ -247,7 +253,7 @@ class AuthService {
   }
 
   // Schedule management methods
-  
+
   // Add schedule to Firestore
   Future<void> addSchedule({
     required String title,
@@ -259,6 +265,9 @@ class AuthService {
     String? dayOfWeek,
     String? startTime,
     String? endTime,
+    String? postedBy,
+    String? postedByName,
+    String? postedByRole,
   }) async {
     final doc = _firestore.collection('schedules').doc();
     await doc.set({
@@ -272,6 +281,9 @@ class AuthService {
       'dayOfWeek': dayOfWeek,
       'startTime': startTime,
       'endTime': endTime,
+      'postedBy': postedBy,
+      'postedByName': postedByName,
+      'postedByRole': postedByRole,
       'createdAt': Timestamp.now(),
     });
   }

@@ -31,10 +31,11 @@ import config
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-ESP32_CAM_IP = "10.171.194.168"  # <--- UPDATE THIS TO YOUR ESPCAM IP
+ESP32_CAM_IP = "10.172.135.168"  # <--- UPDATE THIS TO YOUR ESPCAM IP
 
 # Initialize FastAPI app
 app = FastAPI(
+    
     title="Face Recognition Attendance System",
     description="Backend API for student registration and attendance marking",
     version="1.0.0"
@@ -210,7 +211,7 @@ class AutoScheduler:
         self._stop_webcam.clear()
 
         TOTAL_LOOPS = 4
-        LOOP_INTERVAL_SECONDS = 30
+        LOOP_INTERVAL_SECONDS = 50
         THRESHOLD = 2  # Must be detected in >= 2 out of 6 loops
 
         try:

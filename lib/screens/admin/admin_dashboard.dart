@@ -101,7 +101,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   ],
                 ),
                 onTap: () {
-                  authProvider.signOut();
+                  // Use Future.delayed to ensure popup is fully closed before sign out
+                  Future.delayed(const Duration(milliseconds: 300), () {
+                    authProvider.signOut();
+                  });
                 },
               ),
             ],
@@ -283,30 +286,18 @@ class _AdminDashboardState extends State<AdminDashboard> {
               const SizedBox(width: 12),
               Expanded(
                 child: _buildActionCard(
-                  icon: Icons.how_to_reg,
-                  title: 'Start Attendance',
-                  subtitle: 'Mark attendance via webcam',
-                  color: Colors.green,
-                  onTap: () {
-                    _showAttendanceDialog(user);
-                  },
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          
-          Row(
-            children: [
-              Expanded(
-                child: _buildActionCard(
                   icon: Icons.people_alt,
                   title: 'Manage Students',
                   subtitle: 'View and manage students',
                   onTap: () => setState(() => _currentIndex = 1),
                 ),
               ),
-              const SizedBox(width: 12),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          Row(
+            children: [
               Expanded(
                 child: _buildActionCard(
                   icon: Icons.analytics,
@@ -322,25 +313,18 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   },
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          
-          Row(
-            children: [
+              const SizedBox(width: 12),
               Expanded(
                 child: _buildActionCard(
                   icon: Icons.star,
                   title: 'Promote CR',
                   subtitle: 'Make class representative',
+                  color: Colors.orange,
                   onTap: () {
                     // TODO: Navigate to promote CR
                   },
                 ),
               ),
-              const SizedBox(width: 12),
-              // Empty space for balance
-              Expanded(child: Container()),
             ],
           ),
         ],

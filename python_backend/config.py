@@ -12,7 +12,7 @@ FIREBASE_CREDENTIALS_PATH = os.getenv("FIREBASE_CREDENTIALS_PATH", "serviceAccou
 FIREBASE_CREDENTIALS = os.getenv("FIREBASE_CREDENTIALS")  # JSON string for cloud deployment
 
 # Server Configuration
-HOST = os.getenv("HOST", "0.0.0.0")
+HOST = os.getenv("HOST", "10.172.135.246")
 PORT = int(os.getenv("PORT", 8000))
 
 # Face Recognition Settings (InsightFace ArcFace - cosine similarity threshold)

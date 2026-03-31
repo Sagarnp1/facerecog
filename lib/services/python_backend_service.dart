@@ -5,11 +5,10 @@ import 'package:flutter/foundation.dart';
 
 /// Service for communicating with Python backend for face recognition
 class PythonBackendService {
-  // For Android Emulator: use 10.0.2.2 (special alias for host machine)
-  // For Physical Device on same WiFi: use PC's IP address
-  // For Windows/Desktop: use localhost
-  static const String defaultRegistrationUrl = 'http://10.171.194.246:8000';
-  static const String defaultAttendanceUrl = 'http://10.171.194.246:8000';
+  // Hugging Face Spaces deployment URL
+  // Your backend running on local network IP
+  static const String defaultRegistrationUrl = 'http://10.172.135.246:8000';
+  static const String defaultAttendanceUrl = 'http://10.172.135.246:8000';
   
   final Dio _dio;
   final String registrationBaseUrl;

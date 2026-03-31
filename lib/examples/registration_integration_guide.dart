@@ -19,9 +19,9 @@
 ///      void initState() {
 ///        super.initState();
 ///        // For registration, use network IP if server is on different machine
-///        // For example: 'http://192.168.1.100:8000'
+///        // For example: 'http://10.172.135.246:8000'
 ///        _pythonBackend = PythonBackendService(
-///          registrationUrl: 'http://localhost:8000', // Change to network IP if needed
+///          registrationUrl: 'http://10.172.135.246:8000', // Change to network IP if needed
 ///        );
 ///      }
 ///    }
@@ -245,7 +245,7 @@
 /// 2. Lighting: Good lighting is essential for accurate face detection
 /// 3. Face Position: Face should be clearly visible and frontal in images
 /// 4. Network Configuration: For registration server on different machine,
-///    update registrationUrl to the network IP address (e.g., 'http://192.168.1.100:8000')
+///    update registrationUrl to the network IP address (e.g., 'http://10.172.135.246:8000')
 /// 5. Timeout: Image processing may take 15-30 seconds for 5 images
 /// 6. Error Messages: Python backend returns specific error messages for each image
 ///    that fails processing (e.g., "No face detected in image 3")

@@ -61,7 +61,10 @@ class _StudentDashboardState extends State<StudentDashboard> {
                   ],
                 ),
                 onTap: () {
-                  authProvider.signOut();
+                  // Use Future.delayed to ensure popup is fully closed before sign out
+                  Future.delayed(const Duration(milliseconds: 300), () {
+                    authProvider.signOut();
+                  });
                 },
               ),
             ],
@@ -513,6 +516,12 @@ class _StudentDashboardState extends State<StudentDashboard> {
                             ),
                           ),
                         ),
+                        // Delete button for CR who posted the notice
+                        if (user.isCR && (notice['postedByRole'] == 'cr' || notice['postedBy'] == user.uid))
+                          IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () => _deleteNotice(notice['id'], Provider.of<AuthProvider>(context, listen: false)),
+                          ),
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -537,6 +546,118 @@ class _StudentDashboardState extends State<StudentDashboard> {
         ));
       },
     );
+  }
+
+  // Delete schedule method
+  void _deleteSchedule(String scheduleId, AuthProvider authProvider) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Schedule'),
+        content: const Text('Are you sure you want to delete this schedule?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        final success = await authProvider.deleteSchedule(scheduleId);
+
+        if (mounted) {
+          if (success) {
+            setState(() {}); // Refresh the view
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Schedule deleted successfully'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Failed to delete schedule: ${authProvider.error}'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error deleting schedule: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  // Delete notice method
+  void _deleteNotice(String noticeId, AuthProvider authProvider) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Notice'),
+        content: const Text('Are you sure you want to delete this notice?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        final success = await authProvider.deleteNotice(noticeId);
+
+        if (mounted) {
+          if (success) {
+            setState(() {}); // Refresh the view
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Notice deleted successfully'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Failed to delete notice: ${authProvider.error}'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error deleting notice: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
   }
 
   Widget _buildSchedulesTab(UserModel user) {
@@ -627,6 +748,12 @@ class _StudentDashboardState extends State<StudentDashboard> {
                             ),
                           ),
                         ),
+                        // Show delete option for CR (for schedules they created)
+                        if (user.isCR && (schedule['postedByRole'] == 'cr' || schedule['postedBy'] == user.uid))
+                          IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () => _deleteSchedule(schedule['id'], authProvider),
+                          ),
                       ],
                     ),
                     const SizedBox(height: 8),

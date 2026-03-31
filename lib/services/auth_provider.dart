@@ -143,8 +143,21 @@ class AuthProvider extends ChangeNotifier {
     required String body,
     required Department department,
   }) async {
-    await _authService.addNotice(title: title, body: body, department: department);
-    
+    // Determine the role of the poster
+    String postedByRole = 'admin';
+    if (_currentUser != null && _currentUser!.isCR) {
+      postedByRole = 'cr';
+    }
+
+    await _authService.addNotice(
+      title: title,
+      body: body,
+      department: department,
+      postedBy: _currentUser?.uid,
+      postedByName: _currentUser?.fullName,
+      postedByRole: postedByRole,
+    );
+
     // Send notification to all users in the department
     await NotificationService.sendNoticeNotification(
       title,
@@ -200,6 +213,12 @@ class AuthProvider extends ChangeNotifier {
     String? startTime,
     String? endTime,
   }) async {
+    // Determine the role of the poster
+    String postedByRole = 'admin'; // default
+    if (_currentUser != null && _currentUser!.isCR) {
+      postedByRole = 'cr';
+    }
+
     await _authService.addSchedule(
       title: title,
       description: description,
@@ -210,8 +229,11 @@ class AuthProvider extends ChangeNotifier {
       dayOfWeek: dayOfWeek,
       startTime: startTime,
       endTime: endTime,
+      postedBy: _currentUser?.uid,
+      postedByName: _currentUser?.fullName,
+      postedByRole: postedByRole,
     );
-    
+
     // Send notification to users in the department and year
     await NotificationService.sendScheduleNotification(
       title,
